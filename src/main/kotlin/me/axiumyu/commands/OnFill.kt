@@ -7,9 +7,11 @@ import com.sk89q.worldedit.math.BlockVector3
 import com.sk89q.worldedit.regions.CuboidRegion
 import com.sk89q.worldedit.regions.NullRegion
 import com.sk89q.worldedit.regions.Region
-import me.axiumyu.ModeParser
+import me.axiumyu.parser.PlaceModeParser
 import me.axiumyu.entity.EntityParser
+import me.axiumyu.parser.LocationModeParser
 import me.axiumyu.util.Utils.Location
+import me.axiumyu.util.Utils.add
 import me.axiumyu.util.Utils.classifyStrings
 import net.kyori.adventure.text.Component.text
 import net.kyori.adventure.text.format.TextColor.color
@@ -18,7 +20,6 @@ import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
-
 
 
 /**
@@ -67,7 +68,7 @@ object OnFill : CommandExecutor {
         }
 
         val region: Region? = validateRegion(p0)
-        if(region==null) return false
+        if (region == null) return false
 
         val start = region.minimumPoint
         val end = region.maximumPoint
@@ -77,17 +78,22 @@ object OnFill : CommandExecutor {
         var skipBlock = 0
         try {
             val list = p3.toMutableList()
-            val params = classifyStrings(list)
             val type = EntityParser.initEntity(list.removeAt(0))
-            val mode = ModeParser.parseMode(params.first)
-            val replace = mode["replace"] == true
-            val clear = mode["clear"] == true
-            val skip = mode["skip"] == true
+            val params = classifyStrings(list)
+
+            val placeMode = PlaceModeParser.parsePlaceMode(params.placeModes)
+            val replace = placeMode["replace"] == true
+            val clear = placeMode["clear"] == true
+            val skip = placeMode["skip"] == true
+
+            val position = params.positionMode
+
+            p0.sendMessage(text().content("填充模式：${placeMode.keys.joinToString(", ")}").color(color(INFO)))
             for (i in start.x..end.x) {
                 for (j in start.y..end.y) {
                     for (k in start.z..end.z) {
                         val location = Location(p0.world, i, j, k)
-                        val sameEntities = p0.world.getNearbyEntities(location, 0.5, 0.5, 0.5) { it.type == type }
+                        val sameEntities = p0.world.getNearbyEntities(location.add(LocationModeParser.PostionMode.CENTER), 0.5, 0.5, 0.5) { it.type == type }
                         if (replace && sameEntities.isNotEmpty()) {
                             sameEntities.forEach { it.remove() }
                         }
@@ -99,9 +105,8 @@ object OnFill : CommandExecutor {
                                 continue
                             }
                         }
-
-                        val entityPrime = p0.world.spawnEntity(location, type)
-                        EntityParser.writeAttribute(entityPrime, params.second)
+                        val entityPrime = p0.world.spawnEntity(location.add(position), type)
+                        EntityParser.writeAttribute(entityPrime, params.attributes)
                     }
                 }
             }

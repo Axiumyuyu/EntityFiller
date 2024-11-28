@@ -1,7 +1,7 @@
-package me.axiumyu
+package me.axiumyu.parser
 
 /**
- * Modes(需要带上`-`前缀):
+ * Place Modes(需要带上`-`前缀):
  *
  * - f - force : (默认模式)强制放置实体，忽略方块，实体
  *
@@ -10,10 +10,9 @@ package me.axiumyu
  * - s - skip : 跳过方块
  *
  * - c - clear : 清除选区内方块后放置实体
- *
  */
 
-object ModeParser {
+object PlaceModeParser {
 
     @JvmField
     val shortcut = hashMapOf<String, String>(
@@ -32,17 +31,13 @@ object ModeParser {
     )
 
     @JvmStatic
-    fun parseMode(modes: List<String>): Map<String, Boolean> {
+    fun parsePlaceMode(placeModes: List<String>): Map<String, Boolean> {
         val initMap = default.toMutableMap()
-        var modified = false
-        modes.forEach {
+        placeModes.forEach {
             if (shortcut.containsKey(it)) {
                 initMap[shortcut[it]!!] = true
-                modified = true
-
             } else if (shortcut.values.contains(it)) {
                 initMap[it] = true
-                modified = true
             }
         }
         return initMap
