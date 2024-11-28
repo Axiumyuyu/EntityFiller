@@ -1,5 +1,6 @@
 package me.axiumyu
 
+import me.axiumyu.commands.MainCommand
 import me.axiumyu.commands.OnFill
 import org.bukkit.Bukkit
 import org.bukkit.plugin.java.JavaPlugin
@@ -14,6 +15,7 @@ class EntityFiller : JavaPlugin() {
             manager.disablePlugin(this)
         }
         getCommand("fillentity")?.setExecutor(OnFill)
+        getCommand("ef")?.setExecutor(MainCommand)
     }
 
     override fun onDisable() {

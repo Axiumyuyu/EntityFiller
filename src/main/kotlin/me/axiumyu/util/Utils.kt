@@ -121,7 +121,7 @@ object Utils {
     }
 
     @JvmStatic
-    fun Location.add(positionMode: LocationModeParser.PostionMode): Location {
+    fun Location.setPosition(positionMode: LocationModeParser.PostionMode): Location {
         return this.add(positionMode.x, positionMode.y, positionMode.z)
     }
 

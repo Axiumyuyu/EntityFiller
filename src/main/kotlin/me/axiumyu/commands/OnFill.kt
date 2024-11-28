@@ -7,11 +7,11 @@ import com.sk89q.worldedit.math.BlockVector3
 import com.sk89q.worldedit.regions.CuboidRegion
 import com.sk89q.worldedit.regions.NullRegion
 import com.sk89q.worldedit.regions.Region
-import me.axiumyu.parser.PlaceModeParser
 import me.axiumyu.entity.EntityParser
-import me.axiumyu.parser.LocationModeParser
+import me.axiumyu.parser.LocationModeParser.PostionMode.CENTER
+import me.axiumyu.parser.PlaceModeParser.parsePlaceMode
 import me.axiumyu.util.Utils.Location
-import me.axiumyu.util.Utils.add
+import me.axiumyu.util.Utils.setPosition
 import me.axiumyu.util.Utils.classifyStrings
 import net.kyori.adventure.text.Component.text
 import net.kyori.adventure.text.format.TextColor.color
@@ -20,7 +20,6 @@ import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
-
 
 /**
  * /fillentity [EntityType] <mode> ... <属性>=<值> <属性>=<值> ...
@@ -49,8 +48,9 @@ import org.bukkit.entity.Player
  *
  * 示例：
  * /fillentity zombie -c Health=1.0d
- * 该示例命令将在使用WorldEdit创建的选区中清除所有非空气方块，并在每个方块上填充僵尸实体，并设置其生命值为1.0。
+ * 该示例命令将在使用WorldEdit创建的Cuboid选区中清除所有非空气方块，并在每个方块上填充僵尸实体，并设置其生命值为1.0。
  */
+
 object OnFill : CommandExecutor {
     private const val INFO = 0x58ec7f
     private const val ERROR = 0xCC3333
@@ -61,6 +61,10 @@ object OnFill : CommandExecutor {
         if (p0 !is Player) {
             p0.sendMessage(text().content("仅玩家可执行此命令").color(color(ERROR)))
             return false
+        }
+        if (!p0.hasPermission("entityfiller.command.use")) {
+            p0.sendMessage(text().content("你没有权限执行此命令").color(color(ERROR)))
+            return true
         }
         if (p3 == null || p3.isEmpty()) {
             p0.sendMessage(text().content("请输入实体类型").color(color(ERROR)))
@@ -81,7 +85,7 @@ object OnFill : CommandExecutor {
             val type = EntityParser.initEntity(list.removeAt(0))
             val params = classifyStrings(list)
 
-            val placeMode = PlaceModeParser.parsePlaceMode(params.placeModes)
+            val placeMode = parsePlaceMode(params.placeModes)
             val replace = placeMode["replace"] == true
             val clear = placeMode["clear"] == true
             val skip = placeMode["skip"] == true
@@ -93,19 +97,22 @@ object OnFill : CommandExecutor {
                 for (j in start.y..end.y) {
                     for (k in start.z..end.z) {
                         val location = Location(p0.world, i, j, k)
-                        val sameEntities = p0.world.getNearbyEntities(location.add(LocationModeParser.PostionMode.CENTER), 0.5, 0.5, 0.5) { it.type == type }
+                        val sameEntities by lazy{
+                            p0.world.getNearbyEntities(location.setPosition(CENTER), 0.5, 0.5, 0.5) { it.type == type }
+                        }
                         if (replace && sameEntities.isNotEmpty()) {
                             sameEntities.forEach { it.remove() }
                         }
                         if (!location.block.isEmpty) {
                             if (clear) {
                                 location.block.type = Material.AIR
-                            } else if (skip) {
+                            }
+                            if (skip) {
                                 skipBlock++
                                 continue
                             }
                         }
-                        val entityPrime = p0.world.spawnEntity(location.add(position), type)
+                        val entityPrime = p0.world.spawnEntity(location.setPosition(position), type)
                         EntityParser.writeAttribute(entityPrime, params.attributes)
                     }
                 }

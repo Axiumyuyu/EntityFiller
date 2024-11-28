@@ -11,4 +11,8 @@ commands:
   fillentity:
     description: EntityFiller command
     usage: /<command> <subcommand> [args]
-    permission: entityfiller.command.entityfiller
+    permission: entityfiller.command.use
+  ef:
+    description: EntityFiller Admin Command
+    usage: /<command> <subcommand> [args]
+    permission: entityfiller.command.admin
