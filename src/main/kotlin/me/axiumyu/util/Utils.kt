@@ -4,18 +4,22 @@ import com.sk89q.worldedit.math.BlockVector3
 import org.bukkit.Location
 import org.bukkit.World
 
+/**
+ * 工具类
+ */
+
 typealias ParamGroup = Pair<List<String>, List<Pair<String, String>>>
 
 object Utils {
 
-    @JvmStatic
+    /*@JvmStatic
     fun BlockVector3.toLocation(world: World) = Location(world, x.toDouble(), y.toDouble(), z.toDouble())
 
     @JvmStatic
     fun BlockVector3.toBlockLocation(world: World) = Location(world, blockX.toDouble(), blockY.toDouble(), blockZ.toDouble())
 
     @JvmStatic
-    fun Location.toBlockCenter() = this.toBlockLocation().add(0.5, 0.5, 0.5)
+    fun Location.toBlockCenter() = this.toBlockLocation().add(0.5, 0.5, 0.5)*/
 
     @JvmStatic
     fun Location(world: World, x: Int, y: Int, z: Int) : Location{

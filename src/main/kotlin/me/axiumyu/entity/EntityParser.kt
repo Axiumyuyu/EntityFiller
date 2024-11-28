@@ -1,32 +1,20 @@
 package me.axiumyu.entity
 
 import de.tr7zw.nbtapi.NBT
-import me.axiumyu.ModeParser
-import me.axiumyu.util.Utils.classifyStrings
 import org.bukkit.entity.Entity
 import org.bukkit.entity.EntityType
 
-class EntityParser(params: Array<out String>) {
-    val param = params.toMutableList()
-    val type = param.removeAt(0)
-    lateinit var modes : Map<String, Boolean>
+object EntityParser {
 
-    fun initEntity(): EntityType {
+    fun initEntity(type: String): EntityType {
         val entityType = EntityType.fromName(type)
         if (entityType == null) throw IllegalArgumentException("Invalid entity type: $type")
         return entityType
     }
 
-
-
     @Throws(NumberFormatException::class)
-    fun writeAttribute(entity: Entity): Entity {
-        val filterResult = classifyStrings(param)
-        val modes = filterResult.first
-        val attributes = filterResult.second
-        this.modes = ModeParser.parseMode(modes)
-
-        attributes.forEach {
+    fun writeAttribute(entity: Entity,params: List<Pair<String, String>>): Entity {
+        params.forEach {
             val key = it.first
             val value = it.second
 

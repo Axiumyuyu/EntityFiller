@@ -3,11 +3,14 @@ package me.axiumyu.commands
 import com.sk89q.worldedit.IncompleteRegionException
 import com.sk89q.worldedit.WorldEdit
 import com.sk89q.worldedit.bukkit.BukkitAdapter
+import com.sk89q.worldedit.math.BlockVector3
 import com.sk89q.worldedit.regions.CuboidRegion
 import com.sk89q.worldedit.regions.NullRegion
 import com.sk89q.worldedit.regions.Region
+import me.axiumyu.ModeParser
 import me.axiumyu.entity.EntityParser
 import me.axiumyu.util.Utils.Location
+import me.axiumyu.util.Utils.classifyStrings
 import net.kyori.adventure.text.Component.text
 import net.kyori.adventure.text.format.TextColor.color
 import org.bukkit.Material
@@ -15,6 +18,8 @@ import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
+
+
 
 /**
  * /fillentity [EntityType] <mode> ... <属性>=<值> <属性>=<值> ...
@@ -46,73 +51,84 @@ import org.bukkit.entity.Player
  * 该示例命令将在使用WorldEdit创建的选区中清除所有非空气方块，并在每个方块上填充僵尸实体，并设置其生命值为1.0。
  */
 object OnFill : CommandExecutor {
-
+    private const val INFO = 0x58ec7f
+    private const val ERROR = 0xCC3333
     override fun onCommand(
         p0: CommandSender, p1: Command, p2: String,
         p3: Array<out String>?
     ): Boolean {
         if (p0 !is Player) {
-            p0.sendMessage(text().content("仅玩家可执行此命令").color(color(0x58ec7f)))
+            p0.sendMessage(text().content("仅玩家可执行此命令").color(color(ERROR)))
             return false
         }
         if (p3 == null || p3.isEmpty()) {
-            p0.sendMessage(text().content("请输入实体类型").color(color(0x58ec7f)))
+            p0.sendMessage(text().content("请输入实体类型").color(color(ERROR)))
             return false
         }
-        val region: Region = try {
-            val localSession = WorldEdit.getInstance().sessionManager.get(BukkitAdapter.adapt(p0))
+
+        val region: Region? = validateRegion(p0)
+        if(region==null) return false
+
+        val start = region.minimumPoint
+        val end = region.maximumPoint
+
+        p0.sendMessage(text().content(formatRegionSize(start, end)).color(color(INFO)))
+        p0.sendMessage(text().content("正在填充实体...").color(color(INFO)))
+        var skipBlock = 0
+        try {
+            val list = p3.toMutableList()
+            val params = classifyStrings(list)
+            val type = EntityParser.initEntity(list.removeAt(0))
+            val mode = ModeParser.parseMode(params.first)
+            val replace = mode["replace"] == true
+            val clear = mode["clear"] == true
+            val skip = mode["skip"] == true
+            for (i in start.x..end.x) {
+                for (j in start.y..end.y) {
+                    for (k in start.z..end.z) {
+                        val location = Location(p0.world, i, j, k)
+                        val sameEntities = p0.world.getNearbyEntities(location, 0.5, 0.5, 0.5) { it.type == type }
+                        if (replace && sameEntities.isNotEmpty()) {
+                            sameEntities.forEach { it.remove() }
+                        }
+                        if (!location.block.isEmpty) {
+                            if (clear) {
+                                location.block.type = Material.AIR
+                            } else if (skip) {
+                                skipBlock++
+                                continue
+                            }
+                        }
+
+                        val entityPrime = p0.world.spawnEntity(location, type)
+                        EntityParser.writeAttribute(entityPrime, params.second)
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            p0.sendMessage(text().content("发生了错误：${e.javaClass.simpleName}").color(color(ERROR)))
+            p0.sendMessage(text().content(e.message ?: "未知错误").color(color(ERROR)))
+        }
+        val count = (end.x - start.x + 1) * (end.y - start.y + 1) * (end.z - start.z + 1) - skipBlock
+        p0.sendMessage(text().content("填充完成，共填充了 $count 个实体").color(color(INFO)))
+        return true
+    }
+
+    private fun validateRegion(p0: Player): Region? {
+        val localSession = WorldEdit.getInstance().sessionManager.get(BukkitAdapter.adapt(p0))
+        val region = try {
             localSession.getSelection(localSession.selectionWorld)
         } catch (_: IncompleteRegionException) {
             NullRegion()
         }
-        val ep = EntityParser(p3)
-        val type = ep.initEntity()
-        val mode = ep.modes
-
         if (region !is CuboidRegion) {
-            p0.sendMessage(text().content("请使用WorldEdit选择一个Cuboid区域").color(color(0x58ec7f)))
-            return false
+            p0.sendMessage(text().content("请使用WorldEdit选择一个Cuboid区域").color(color(ERROR)))
+            return null
         }
-        val start = region.minimumPoint
-        val end = region.maximumPoint
-
-        p0.sendMessage(
-            text().content(
-                "区域大小：${start.x}, ${start.y}, ${start.z} 到 ${end.x}, ${end.y}, ${end.z}"
-            ).color(color(0x58ec7f))
-        )
-        p0.sendMessage(text().content("正在填充实体...").color(color(0x58ec7f)))
-        var skip = 0
-        for (i in start.x..end.x) {
-            for (j in start.y..end.y) {
-                for (k in start.z..end.z) {
-                    val location = Location(p0.world, i, j, k)
-                    val sameEntities = p0.world.getNearbyEntities(location, 0.5, 0.5, 0.5) { it.type == type }
-                    if (mode["replace"]!! && sameEntities.isNotEmpty()) {
-                        sameEntities.forEach { it.remove() }
-                    }
-                    if (!location.block.isEmpty) {
-                        if (mode["clear"]!!) {
-                            location.block.type = Material.AIR
-                        } else if (mode["skip"]!!) {
-                            skip++
-                            continue
-                        }
-                    }
-                    try {
-                        val entityPrime = p0.world.spawnEntity(location, type)
-                        ep.writeAttribute(entityPrime)
-                    } catch (e: Exception) {
-                        p0.sendMessage(text().content("发生了错误：${e.javaClass.simpleName}"))
-                        p0.sendMessage(text().content(e.message ?: "未知错误").color(color(0x58ec7f)))
-                    }
-                }
-            }
-        }
-        val count = (end.x - start.x + 1) * (end.y - start.y + 1) * (end.z - start.z + 1) - skip
-        p0.sendMessage(text().content("填充完成，共填充了 $count 个实体").color(color(0x58ec7f)))
-        return true
+        return region
     }
 
-
+    private fun formatRegionSize(start: BlockVector3, end: BlockVector3): String {
+        return "区域大小：${start.x}, ${start.y}, ${start.z} 到 ${end.x}, ${end.y}, ${end.z}"
+    }
 }

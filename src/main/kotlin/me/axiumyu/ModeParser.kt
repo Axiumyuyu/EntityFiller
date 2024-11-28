@@ -1,19 +1,19 @@
 package me.axiumyu
 
-object ModeParser {
-    /**
-     * Modes(需要带上`-`前缀):
-     *
-     * - f - force : (默认模式)强制放置实体，忽略方块，实体
-     *
-     * - r - replace : 替换已有实体
-     *
-     * - s - skip : 跳过方块
-     *
-     * - c - clear : 清除选区内方块后放置实体
-     *
-     */
+/**
+ * Modes(需要带上`-`前缀):
+ *
+ * - f - force : (默认模式)强制放置实体，忽略方块，实体
+ *
+ * - r - replace : 替换已有实体
+ *
+ * - s - skip : 跳过方块
+ *
+ * - c - clear : 清除选区内方块后放置实体
+ *
+ */
 
+object ModeParser {
 
     @JvmField
     val shortcut = hashMapOf<String, String>(
