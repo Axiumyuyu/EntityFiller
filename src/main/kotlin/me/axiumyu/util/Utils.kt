@@ -1,4 +1,4 @@
-package me.axiumyu.entityFiller.util
+package me.axiumyu.util
 
 import com.sk89q.worldedit.math.BlockVector3
 import org.bukkit.Location
@@ -59,7 +59,7 @@ object Utils {
         val parsedKeyValue = keyValuePairs
             .filter { it.contains("=") }
             .map {
-                val parts = it.split("=")
+                val parts = splitByEquals(it)
                 if (parts.size == 2) {
                     parts[0] to parts[1]  // 返回键值对
                 } else {

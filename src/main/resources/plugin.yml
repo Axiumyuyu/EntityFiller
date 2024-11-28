@@ -1,6 +1,6 @@
 name: EntityFiller
 version: '1.0.0'
-main: me.axiumyu.entityFiller.EntityFiller
+main: me.axiumyu.EntityFiller
 api-version: '1.21'
 depend:
   - WorldEdit
