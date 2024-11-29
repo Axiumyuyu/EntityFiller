@@ -4,15 +4,18 @@
 
 ## Introduction
 
-The Entity Filler Plugin is a Minecraft plugin that provides a core command `/fillentity` for filling a specified area with a certain type of entities and setting their attributes.
+Entity Filler is a Minecraft plugin that provides a core command `/fillentity` for filling a specified area with a certain type of entities and setting their attributes.
+
+Plugin needs [NBTAPI](https://modrinth.com/plugin/nbtapi) and [WorldEdit](https://modrinth.com/plugin/worldedit) or its fork like [FastAsyncWorldEdit](https://modrinth.com/plugin/fastasyncworldedit/) to run
+
 
 ## Command Usage
 
 ### Command Format
 
-
+```
 /fillentity <EntityType> [mode] ... [property]=[value] [property]=[value] ...
-
+```
 
 ### Parameter Description
 
@@ -40,7 +43,7 @@ Append the first letter of the type name to the number to specify the numeric ty
 
 ### Mode Description
 
-For the specific meanings and behaviors of modes, please refer to the `me.axiumyu.entityFiller.BehaviorParser` class.
+For the specific meanings and behaviors of modes, please refer to the `PlaceModeParser` and `PositionMode` class.
 
 ## Examples
 

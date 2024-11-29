@@ -4,20 +4,23 @@
 
 ## 简介
 
-实体填充插件是一个用于Minecraft的插件，它提供了一个核心命令 `/fillentity`，用于在指定的区域内填充特定类型的实体，并设置这些实体的属性。
+Entity Filler是一个用于Minecraft的插件，它提供了一个核心命令 `/fillentity`，用于在指定的区域内填充特定类型的实体，并设置这些实体的属性。
+
+插件需要[NBTAPI](https://modrinth.com/plugin/nbtapi)和[WorldEdit](https://modrinth.com/plugin/worldedit)或其分支[FastAsyncWorldEdit](https://modrinth.com/plugin/fastasyncworldedit/)才能正常工作
 
 ## 命令使用
 
 ### 命令格式
 
 ```
-/fillentity <EntityType> [mode] ... [属性]=[值] [属性]=[值] ...
+/fillentity <EntityType> [fill mode] [position mode] ... [属性]=[值] [属性]=[值] ...
 ```
 
 ### 参数说明
 
 - `<EntityType>`: 必选参数，指定要填充的实体类型。
-- `[mode]`: 可选参数，指定一个或多个填充模式，用于控制填充行为。
+- `[fill mode]`: 可选参数，指定一个或多个填充模式，用于控制填充行为。
+- `[position mode]`: 可选参数，指定一个或多个填充位置，用于控制实体生成时的位置变化。
 - `[属性]=[值]`: 可选参数，设置实体的属性及其对应的值，可以指定多个属性和值。
 
 ### 数据类型说明
@@ -30,9 +33,8 @@
 - **String**: 使用 `""` 表示字符串。
 - **Boolean**: 使用 `true/false` 表示布尔值。
 
-### 数值类型说明
-
 在数值后加上类型名首字母以指定数值类型，例如：
+
 - `1i` 表示整数
 - `1L` 表示长整型
 - `1.0d` 表示双精度浮点数
@@ -40,7 +42,7 @@
 
 ### 模式说明
 
-模式的具体含义和行为请参考 `me.axiumyu.entityFiller.BehaviorParser` 类。
+模式的具体含义和行为请参考 `PlaceModeParser` 和 `PositionMode` 类。
 
 ## 示例
 
