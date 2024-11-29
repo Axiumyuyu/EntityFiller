@@ -1,6 +1,6 @@
 # 实体填充插件[WIP]
 
-**简体中文** | [English](#README-en.md)
+**简体中文** | [English](README-en.md)
 
 ## 简介
 
