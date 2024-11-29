@@ -68,5 +68,4 @@ This plugin follows the MIT License. Please check the LICENSE file in the projec
 
 Please note that the commands and parameter examples in this README document are for reference only. Adjust them according to your needs when using them in practice.
 
-
 ```
