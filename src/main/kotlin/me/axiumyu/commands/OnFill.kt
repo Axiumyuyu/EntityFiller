@@ -7,8 +7,9 @@ import com.sk89q.worldedit.math.BlockVector3
 import com.sk89q.worldedit.regions.CuboidRegion
 import com.sk89q.worldedit.regions.NullRegion
 import com.sk89q.worldedit.regions.Region
+import me.axiumyu.ConfigFile
 import me.axiumyu.entity.EntityParser
-import me.axiumyu.parser.LocationModeParser.PostionMode.CENTER
+import me.axiumyu.parser.LocationModeParser.PostionMode.*
 import me.axiumyu.parser.PlaceModeParser.parsePlaceMode
 import me.axiumyu.util.Utils.Location
 import me.axiumyu.util.Utils.setPosition
@@ -22,14 +23,14 @@ import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 
 /**
- * /fillentity [EntityType] <mode> ... <属性>=<值> <属性>=<值> ...
+ * `/fillentity <EntityType> [mode] ... [属性]=[值] [属性]=[值] ...`
  *
- * 该命令用于填充指定类型的实体，并设置其属性，[]表示必选参数，<>表示可选参数。
+ * 该命令用于填充指定类型的实体，并设置其属性，<>表示必选参数，[]表示可选参数。
  *
  * 参数说明：
- * - [EntityType]: 实体的类型，指定要填充的实体种类。
- * - <mode>: 填充模式，可以指定一个或多个模式来控制填充行为。
- * - <属性>=<值>: 设置实体的属性(区分大小写)及其对应的值，可以指定多个属性和值。
+ * - <EntityType>: 实体的类型，指定要填充的实体种类。
+ * - [mode]: 填充模式，可以指定一个或多个模式来控制填充行为。
+ * - [属性]=[值]: 设置实体的属性(区分大小写)及其对应的值，可以指定多个属性和值。
  *
  * 数据类型说明：
  * - Integer List: 使用 [I;1,2,3] 表示整数列表。
@@ -44,16 +45,17 @@ import org.bukkit.entity.Player
  * - 在数值后加上类型名首字母以指定数值类型，例如：1i 表示整数，1L 表示长整型，1.0d 表示双精度浮点数，1.0f 表示单精度浮点数。
  *
  * 模式说明：
- * - 模式的具体含义和行为请参考 `me.axiumyu.entityFiller.BehaviorParser` 类。
+ * - 模式的具体含义和行为请参考 `PlaceModeParser` 和 `LocationModeParser` 类。
  *
  * 示例：
- * /fillentity zombie -c Health=1.0d
+ * `/fillentity zombie -c Health=1.0d`
  * 该示例命令将在使用WorldEdit创建的Cuboid选区中清除所有非空气方块，并在每个方块上填充僵尸实体，并设置其生命值为1.0。
  */
-
 object OnFill : CommandExecutor {
-    private const val INFO = 0x58ec7f
-    private const val ERROR = 0xCC3333
+
+    const val INFO = 0x58ec7f
+    const val ERROR = 0xCC3333
+
     override fun onCommand(
         p0: CommandSender, p1: Command, p2: String,
         p3: Array<out String>?
@@ -76,6 +78,11 @@ object OnFill : CommandExecutor {
 
         val start = region.minimumPoint
         val end = region.maximumPoint
+        val size = getRegionFullSize(start, end)
+        if (size> ConfigFile.maxFillCount){
+            p0.sendMessage(text().content("填充区域过大，请缩小范围").color(color(ERROR)))
+            return false
+        }
 
         p0.sendMessage(text().content(formatRegionSize(start, end)).color(color(INFO)))
         p0.sendMessage(text().content("正在填充实体...").color(color(INFO)))
@@ -92,12 +99,13 @@ object OnFill : CommandExecutor {
 
             val position = params.positionMode
 
-            p0.sendMessage(text().content("填充模式：${placeMode.keys.joinToString(", ")}").color(color(INFO)))
+            p0.sendMessage(text().content("填充模式：${placeMode.filter{it.value}.toList().joinToString(", ")}").color(color(INFO)))
+            p0.sendMessage(text().content("att:${params.attributes}, pos:${position},placemode:${placeMode}"))
             for (i in start.x..end.x) {
                 for (j in start.y..end.y) {
                     for (k in start.z..end.z) {
                         val location = Location(p0.world, i, j, k)
-                        val sameEntities by lazy{
+                        val sameEntities by lazy {
                             p0.world.getNearbyEntities(location.setPosition(CENTER), 0.5, 0.5, 0.5) { it.type == type }
                         }
                         if (replace && sameEntities.isNotEmpty()) {
@@ -121,10 +129,12 @@ object OnFill : CommandExecutor {
             p0.sendMessage(text().content("发生了错误：${e.javaClass.simpleName}").color(color(ERROR)))
             p0.sendMessage(text().content(e.message ?: "未知错误").color(color(ERROR)))
         }
-        val count = (end.x - start.x + 1) * (end.y - start.y + 1) * (end.z - start.z + 1) - skipBlock
-        p0.sendMessage(text().content("填充完成，共填充了 $count 个实体").color(color(INFO)))
+        p0.sendMessage(text().content("填充完成，共填充了 ${size - skipBlock} 个实体").color(color(INFO)))
         return true
     }
+
+    private fun getRegionFullSize(start: BlockVector3, end: BlockVector3): Int =
+        (end.x - start.x + 1) * (end.y - start.y + 1) * (end.z - start.z + 1)
 
     private fun validateRegion(p0: Player): Region? {
         val localSession = WorldEdit.getInstance().sessionManager.get(BukkitAdapter.adapt(p0))

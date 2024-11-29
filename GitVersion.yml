@@ -1,0 +1,10 @@
+mode: ContinuousDelivery
+branches:
+  master:
+    regex: ^master$
+    increment: Patch
+    trackMergeTarget: false
+  develop:
+    regex: ^develop$
+    increment: Minor
+    trackMergeTarget: true

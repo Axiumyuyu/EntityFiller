@@ -2,6 +2,9 @@ package me.axiumyu.commands
 
 import me.axiumyu.ConfigFile
 import me.axiumyu.EntityFiller
+import me.axiumyu.commands.OnFill.INFO
+import net.kyori.adventure.text.Component.text
+import net.kyori.adventure.text.format.TextColor.color
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
@@ -24,8 +27,11 @@ object MainCommand : CommandExecutor {
             "reload" -> {
                 getPlugin(EntityFiller::class.java).reloadConfig()
                 ConfigFile.maxFillCount = getPlugin(EntityFiller::class.java).config.getInt("max-fill-count")
+                p0.sendMessage(text().content("Config reloaded.").color(color(INFO)))
+                return true
             }
             else -> {}
         }
+        return true
     }
 }

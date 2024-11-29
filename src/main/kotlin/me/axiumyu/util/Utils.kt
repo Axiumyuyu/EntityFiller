@@ -4,6 +4,9 @@ import me.axiumyu.parser.LocationModeParser
 import org.bukkit.Location
 import org.bukkit.World
 
+/**
+ * 工具类
+ */
 object Utils {
 
     /*@JvmStatic
@@ -47,36 +50,6 @@ object Utils {
         result.add(currentPart.toString())
         return result
     }
-
-    /*@JvmStatic
-    fun classifyStrings(strings: List<String>): ParamGroup {
-        // 使用 partition 将列表分为两组
-        val (dashPrefixed, keyValuePairs) = strings.partition { it.startsWith("-") }
-
-        // 解析形如 "键=值" 的字符串
-        val parsedKeyValue = keyValuePairs
-            .filter { it.contains("=") }
-            .map {
-                val parts = splitByEquals(it)
-                if (parts.size == 2) {
-                    parts[0] to parts[1]  // 返回键值对
-                } else {
-                    throw InvalidFormatException("字符串 '$it' 格式不符合 '键=值' 规则")
-                }
-            }
-
-        // 检查剩下的没有被分类的字符串
-        val invalidStrings = strings.filter {
-            !it.startsWith("-") && !it.contains("=")
-        }
-
-        // 如果有不符合格式的字符串，则抛出异常
-        if (invalidStrings.isNotEmpty()) {
-            throw InvalidFormatException("存在不符合格式的字符串: $invalidStrings")
-        }
-
-        return (dashPrefixed to parsedKeyValue)
-    }*/
     
     @JvmStatic
     fun classifyStrings(strings: List<String>): ParamGroup {

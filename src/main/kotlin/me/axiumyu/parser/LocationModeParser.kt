@@ -14,7 +14,6 @@ import kotlin.random.Random
 * - u - up : 实体生成于向上取整坐标(TODO)
 *
 */
-
 object LocationModeParser {
     @JvmField
     val shortcut = hashMapOf<String, String>(
