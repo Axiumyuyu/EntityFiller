@@ -1,0 +1,18 @@
+name: EntityFiller
+version: '1.0.0'
+main: me.axiumyu.EntityFiller
+api-version: '1.21'
+depend:
+  - WorldEdit
+  - NBTAPI
+libraries:
+  - 'org.jetbrains.kotlin:kotlin-stdlib:2.0.20'
+commands:
+  fillentity:
+    description: EntityFiller command
+    usage: /<command> <subcommand> [args]
+    permission: entityfiller.command.use
+  ef:
+    description: EntityFiller Admin Command
+    usage: /<command> <subcommand> [args]
+    permission: entityfiller.command.admin
