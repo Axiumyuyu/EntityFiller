@@ -14,29 +14,21 @@ package me.axiumyu.parser
 object PlaceModeParser {
 
     @JvmField
-    val shortcut = hashMapOf<String, String>(
+    val shortcut = hashMapOf(
         "f" to "force",
         "r" to "replace",
         "s" to "skip",
         "c" to "clear"
     )
 
-    @JvmField
-    val default = hashMapOf<String, Boolean>(
-        "force" to true,        //default
-        "replace" to false,
-        "skip" to false,        //覆盖"force"
-        "clear" to false
-    )
-
     @JvmStatic
-    fun parsePlaceMode(placeModes: List<String>): Map<String, Boolean> {
-        val initMap = default.toMutableMap()
+    fun parsePlaceMode(placeModes: List<String>): HashSet<String> {
+        val initMap = hashSetOf<String>()
         placeModes.forEach {
             if (shortcut.containsKey(it)) {
-                initMap[shortcut[it]!!] = true
+                initMap.add(shortcut[it]!!)
             } else if (shortcut.values.contains(it)) {
-                initMap[it] = true
+                initMap.add(it)
             }
         }
         return initMap

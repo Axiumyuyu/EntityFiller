@@ -16,7 +16,7 @@ import kotlin.random.Random
 */
 object LocationModeParser {
     @JvmField
-    val shortcut = hashMapOf<String, String>(
+    val shortcut = hashMapOf (
         "u" to "up",
         "r" to "random",
         "d" to "down",

@@ -6,12 +6,6 @@ import org.bukkit.entity.EntityType
 
 object EntityParser {
 
-    fun initEntity(type: String): EntityType {
-        val entityType = EntityType.fromName(type)
-        if (entityType == null) throw IllegalArgumentException("Invalid entity type: $type")
-        return entityType
-    }
-
     @Throws(NumberFormatException::class)
     fun writeAttribute(entity: Entity,params: List<Pair<String, String>>): Entity {
         params.forEach {

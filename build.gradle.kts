@@ -1,10 +1,10 @@
 plugins {
-    kotlin("jvm") version "2.0.0"
+    kotlin("jvm") version "2.1.10"
     id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
 group = "me.axiumyu"
-version = "2.1.2"
+version = "2.2.2"
 
 repositories {
     mavenLocal()
@@ -23,7 +23,7 @@ repositories {
 }
 
 dependencies {
-    implementation("io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT")
+    implementation("io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT")
 
     implementation("de.tr7zw:item-nbt-api-plugin:2.14.0")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
