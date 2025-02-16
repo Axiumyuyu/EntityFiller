@@ -12,15 +12,20 @@ import me.axiumyu.entity.EntityParser
 import me.axiumyu.parser.LocationModeParser.PositionMode.*
 import me.axiumyu.parser.PlaceModeParser.parsePlaceMode
 import me.axiumyu.util.Utils.Location
-import me.axiumyu.util.Utils.setPosition
 import me.axiumyu.util.Utils.classifyStrings
+import me.axiumyu.util.Utils.setPosition
 import net.kyori.adventure.text.Component.text
 import net.kyori.adventure.text.format.TextColor.color
+import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
+import org.bukkit.entity.Entity
+import org.bukkit.entity.EntityType
 import org.bukkit.entity.Player
+import org.bukkit.event.entity.CreatureSpawnEvent
+import org.bukkit.util.BoundingBox
 
 /**
  * `/fillentity <EntityType> [mode] ... [属性]=[值] [属性]=[值] ...`
@@ -56,10 +61,8 @@ object OnFill : CommandExecutor {
     const val INFO = 0x58ec7f
     const val ERROR = 0xCC3333
 
-    override fun onCommand(
-        p0: CommandSender, p1: Command, p2: String,
-        p3: Array<out String>?
-    ): Boolean {
+    override fun onCommand(p0: CommandSender, p1: Command, p2: String, p3: Array<out String>): Boolean {
+        val list = p3.toMutableList()
         if (p0 !is Player) {
             p0.sendMessage(text().content("仅玩家可执行此命令").color(color(ERROR)))
             return false
@@ -68,18 +71,18 @@ object OnFill : CommandExecutor {
             p0.sendMessage(text().content("你没有权限执行此命令").color(color(ERROR)))
             return true
         }
-        if (p3 == null || p3.isEmpty()) {
+        if (p3.isEmpty()) {
             p0.sendMessage(text().content("请输入实体类型").color(color(ERROR)))
             return false
         }
+        val type = EntityType.valueOf(list.removeAt(0).uppercase())
 
-        val region: Region? = getValidRegion(p0)
-        if (region == null) return false
+        val region: Region = getValidRegion(p0) ?: return false
 
         val start = region.minimumPoint
         val end = region.maximumPoint
         val size = getRegionFullSize(start, end)
-        if (size> ConfigFile.maxFillCount){
+        if (size > ConfigFile.maxFillCount) {
             p0.sendMessage(text().content("填充区域过大，请缩小范围").color(color(ERROR)))
             return false
         }
@@ -88,31 +91,27 @@ object OnFill : CommandExecutor {
         p0.sendMessage(text().content("正在填充实体...").color(color(INFO)))
         var skipBlock = 0
         try {
-            val list = p3.toMutableList()
-            val type = EntityParser.initEntity(list.removeAt(0))
             val params = classifyStrings(list)
 
             val placeMode = parsePlaceMode(params.placeModes)
-            val replace = placeMode["replace"] == true
-            val clear = placeMode["clear"] == true
-            val skip = placeMode["skip"] == true
-            val force = placeMode["force"] == true
+            val replace = placeMode.contains("replace")
+            val clear = placeMode.contains("clear")
+            val skip = placeMode.contains("skip")
 
             val position = params.positionMode
 
-            val trueKeys = placeMode.filter { it.value }.keys.toList().joinToString()
-            p0.sendMessage(text().content("填充模式：$trueKeys").color(color(INFO)))
-            p0.sendMessage(text().content("att:${params.attributes}, pos:${position},placemode:${placeMode}"))
+//            val trueKeys = placeMode.filter { it.value }.keys.toList().joinToString()
+            p0.sendMessage(text().content("填充模式：replace:$replace , clear:$clear , skip:$skip").color(color(INFO)))
+            p0.sendMessage(text().content("属性:${params.attributes}, 填充位置:${position}"))
+            val sameEntities = getRegionEntities(region, type)
+            if (replace && sameEntities.isNotEmpty()) {
+                sameEntities.forEach { it.remove() }
+                p0.sendMessage(text().content("已删除 $type 实体 ${sameEntities.size} 个").color(color(INFO)))
+            }
             for (i in start.x..end.x) {
                 for (j in start.y..end.y) {
                     for (k in start.z..end.z) {
                         val location = Location(p0.world, i, j, k)
-                        val sameEntities by lazy {
-                            p0.world.getNearbyEntities(location.setPosition(CENTER), 0.5, 0.5, 0.5) { it.type == type }
-                        }
-                        if (replace && sameEntities.isNotEmpty()) {
-                            sameEntities.forEach { it.remove() }
-                        }
                         if (!location.block.isEmpty) {
                             if (clear) {
                                 location.block.type = Material.AIR
@@ -122,10 +121,12 @@ object OnFill : CommandExecutor {
                                 continue
                             }
                         }
-                        if (force && !skip) {
-                            val entityPrime = p0.world.spawnEntity(location.setPosition(position), type)
-                            EntityParser.writeAttribute(entityPrime, params.attributes)
-                        }
+                        val entityPrime = p0.world.spawnEntity(
+                            location.setPosition(position),
+                            type,
+                            CreatureSpawnEvent.SpawnReason.COMMAND
+                        )
+                        EntityParser.writeAttribute(entityPrime, params.attributes)
                     }
                 }
             }
@@ -156,5 +157,26 @@ object OnFill : CommandExecutor {
 
     private fun formatRegionSize(start: BlockVector3, end: BlockVector3): String {
         return "区域大小：${start.x}, ${start.y}, ${start.z} 到 ${end.x}, ${end.y}, ${end.z}"
+    }
+
+    private fun getRegionEntities(region: Region, entityType: EntityType): MutableCollection<Entity> {
+        val max = region.maximumPoint
+        val min = region.minimumPoint
+        val boundBox = BoundingBox(
+            min.x.toDouble(),
+            min.y.toDouble(),
+            min.z.toDouble(),
+            max.x.toDouble(),
+            max.y.toDouble(),
+            max.z.toDouble()
+        )
+        val center = Location(
+            BukkitAdapter.adapt(region.world),
+            (max.x + min.x) / 2.0,
+            (max.y + min.y) / 2.0,
+            (max.z + min.z) / 2.0
+        )
+        return center.world.getNearbyEntities(
+        boundBox) { it.type == entityType }
     }
 }
